@@ -10,7 +10,7 @@
 #import "RinoDemoFamilyListController.h"
 #import "RinoDemoDeviceListController.h"
 #import "RinoDemoSceneListController.h"
-#import <RinoMessageDefaultUISKin/RinoMessageDefaultUISKin.h>
+#import <RinoMessageDefaultUISKin/RinoMessageDefaultUISKinManager.h>
 #import <RinoSceneDefaultUISkin/RinoSceneDefaultUISkin.h>
 #import <RinoActivatorDefaultUISkin/RinoActivatorDefaultUISkin.h>
 #import <RinoUserSettingsDefaultUISkin/RinoUserSettingsDefaultUISkin.h>
@@ -18,6 +18,10 @@
 #import <RinoHomeKit/RinoFamilyBiz.h>
 #import <RinoMessageKit/RinoMessage.h>
 #import <RinoBaseKit/RinoBaseKit.h>
+#import "RinoDeviceIpcViewController.h"
+#import "RinoDeviceIpcMutiViewController.h"
+#import "RinoLaunchMenuProtocolManager.h"
+#import "RinoAMRPlayer.h"
 @interface RinoHomeTestViewController ()<UITableViewDelegate,UITableViewDataSource,RinoHomeDelegate>
 
 @property (nonatomic , strong) UITableView *myTableView;
@@ -29,6 +33,11 @@
 
 @implementation RinoHomeTestViewController
 
+
+-(void)viewWillAppear:(BOOL)animated{
+    [super viewWillAppear:animated];
+    [self.navigationController setNavigationBarHidden:NO animated:YES];
+}
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
@@ -36,6 +45,25 @@
     
     [self.view addSubview:self.myTableView];
     [self getHomeList];
+    
+    
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+        // 创建播放器实例
+        RinoAMRPlayer *player = [[RinoAMRPlayer alloc] init];
+
+        // 播放网络AMR音频
+        NSURL *amrUrl = [NSURL URLWithString:@"https://oss.fuzi.net.cn/app/records/043077437412/record_36ffd9d2-84d1-4b74-866b-63a733ea6b60.amr?Expires=1748834538&OSSAccessKeyId=LTAI5tGWaCXhdPCKvy51TNFt&Signature=yC%2FiPA%2Fhbk3LBk%2FEKOQxha46b0k%3D"];
+        [player playAMRFromURL:amrUrl];
+
+//        // 停止播放
+//        [player stopPlayback];
+    });
+    
+}
+
+-(void)aduio{
+    
+    
     
 }
 -(NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section{
@@ -76,7 +104,7 @@
     }else if([titleStr isEqualToString:@"消息中心"]){
         [[RinoMessageDefaultUISKinManager sharedInstance] gotoMessageViewController];
     }else if([titleStr isEqualToString:@"添加设备"]){
-        [[RinoActivatorManager sharedInstance] gotoActivatorViewControllerWithHomeId:self.home.homeModel.homeId];
+        [[RinoActivatorDefaultUISkinManager sharedInstance]  gotoActivatorHomepageViewControllerWithHomeId:self.home.homeModel.homeId];
     }else if([titleStr isEqualToString:@"添加一键执行场景"]){
         [[RinoSceneDefaultUISkinManager sharedInstance] gotoAddManualSceneViewControllerWithHomeId:self.home.homeModel.homeId];
     }else if([titleStr isEqualToString:@"添加自动化场景"]){
@@ -85,6 +113,14 @@
         [[RinoUserSettingsDefaultUISkinManager sharedInstance] gotoUserSettingViewController];
     }else if ([titleStr isEqualToString:@"家庭管理"]){
         [[RinoHomeDefaultUISkinManager sharedInstance] gotoFamilyManagementViewController];
+    }else if ([titleStr isEqualToString:@"单频道ipc"]){
+        RinoDeviceIpcViewController *vc = [[RinoDeviceIpcViewController alloc]init];
+        RinoDevice *device = [RinoDevice deviceWithDeviceId:@"deviceId"];
+        vc.deviceModel = device.deviceModel;
+        [self.navigationController pushViewController:vc animated:YES];
+    }else if ([titleStr isEqualToString:@"多频道ipc"]){
+        RinoDeviceIpcMutiViewController *vc = [[RinoDeviceIpcMutiViewController alloc]init];
+        [self.navigationController pushViewController:vc animated:YES];
     }
     
     [[RinoUser sharedInstance] updateUserName:@"" success:^{
@@ -121,7 +157,7 @@
         for (RinoRoomModel *roomModel in self.home.roomList) {
             [titles addObject:roomModel.name?:@""];
         }
-        
+        [[RinoLaunchMenuProtocolManager sharedInstance] updateHomeId:homeModel.homeId];
     } failure:^(NSError *error) {
         [RinoProgressHUD hideHUDView];
         [RinoToast showMessage:[error.userInfo StringForKey:NSLocalizedDescriptionKey]];
@@ -131,26 +167,27 @@
 #pragma mark - RinoHomeDelegate
 
 - (void)home:(RinoHome *)home didAddDevice:(RinoDeviceModel *)deviceModel {
-    
+    NSLog(@"--rino-sdk--添加设备");
 }
 
 - (void)home:(RinoHome *)home didRemoveDevice:(NSString *)deviceId {
+    NSLog(@"--rino-sdk--移除设备");
 }
 
 - (void)home:(RinoHome *)home deviceInfoUpdate:(RinoDeviceModel *)deviceModel {
-    
+    NSLog(@"--rino-sdk--设备信息更新");
 }
 
 - (void)home:(RinoHome *)home device:(RinoDeviceModel *)device dataPointUpdate:(NSDictionary *)dps {
-    
+    NSLog(@"--rino-sdk--设备dp 点更新");
 }
 
 - (void)home:(RinoHome *)home deviceAlert:(RinoDeviceModel *)deviceModel {
-   
+    NSLog(@"--rino-sdk--设备的弹框");
 }
 
 - (void)gotoDeviceDetailsWithDeviceModel:(RinoDeviceModel *)deviceModel {
-    
+    NSLog(@"--rino-sdk--进入设备详情");
 }
 
 -(UITableView *)myTableView{

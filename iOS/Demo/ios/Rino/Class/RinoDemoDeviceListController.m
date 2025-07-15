@@ -7,6 +7,7 @@
 
 #import "RinoDemoDeviceListController.h"
 #import <RinoBizCore/RinoBizCore.h>
+#import "RinoDeviceIpcViewController.h"
 @interface RinoDemoDeviceListController ()<UITableViewDelegate,UITableViewDataSource>
 
 @property (nonatomic , strong) UITableView *myTableView;
@@ -54,14 +55,29 @@
     id model = self.dataList[indexPath.row];
     id<RinoDeviceHomeProtocol> impl = [[RinoBizCore sharedInstance] serviceOfProtocol:@protocol(RinoDeviceHomeProtocol)];
     if ([model isKindOfClass:[RinoDeviceModel class]]) {//跳转设备面板
-        [impl gotoDeviceViewControllerWithDeviceModel:model completion:^(UIViewController * _Nullable panelViewController) {
-            [self.navigationController pushViewController:panelViewController animated:YES];
-        }];
+        RinoDevice *device = [RinoDevice deviceWithDeviceId:@""];
+        RinoDeviceModel *deviceModel = model;
+        id<RinoDeviceHomeProtocol> impl = [[RinoBizCore sharedInstance] serviceOfProtocol:@protocol(RinoDeviceHomeProtocol)];
+        if (impl && [impl respondsToSelector:@selector(gotoDeviceViewControllerWithDeviceModel:completion:)]) {
+            [impl gotoDeviceViewControllerWithDeviceModel:deviceModel
+                                               completion:^(UIViewController * _Nullable panelViewController) {
+                if (panelViewController) {
+                    [TopViewController().navigationController pushViewController:panelViewController animated:YES];
+                }
+            }];
+        }
+        
     } else if ([model isKindOfClass:[RinoGroupModel class]]) {//跳转群组面板
         RinoGroupModel *groupModel = model;
-        [impl gotoGroupViewControllerWithGroupModel:model completion:^(UIViewController * _Nullable panelViewController) {
-            [self.navigationController pushViewController:panelViewController animated:YES];
-        }];
+        id<RinoDeviceHomeProtocol> impl = [[RinoBizCore sharedInstance] serviceOfProtocol:@protocol(RinoDeviceHomeProtocol)];
+        if (impl && [impl respondsToSelector:@selector(gotoGroupViewControllerWithGroupModel:completion:)]) {
+            [impl gotoGroupViewControllerWithGroupModel:groupModel
+                                             completion:^(UIViewController * _Nullable panelViewController) {
+                if (panelViewController) {
+                    [TopViewController().navigationController pushViewController:panelViewController animated:YES];
+                }
+            }];
+        }
     }
     
 }
@@ -72,9 +88,7 @@
         for (id model in list) {
             if ([model isKindOfClass:[RinoDeviceModel class]]) {
                 RinoDeviceModel *deviceModel = model;
-                if(!deviceModel.isIpc){
-                    [self.dataList addObject:deviceModel];
-                }
+                [self.dataList addObject:deviceModel];
             } else if ([model isKindOfClass:[RinoGroupModel class]]) {
                 RinoGroupModel *groupModel = model;
                 [self.dataList addObject:groupModel];
